@@ -36,21 +36,22 @@ public class jdbcSapStatus{
                         try{
                             String connectionString = "jdbc:sap://"+host+"/?autocommit=false";
                             connection = DriverManager.getConnection(connectionString, usr, pwd);
+
+                            if (connection != null) {
+                                try {
+                                    String msg = "Connection to HANA successful!";
+                                    Statement stmt = connection.createStatement();
+                                    ResultSet resultSet = stmt.executeQuery("Select 'hello world' from dummy");
+                                    resultSet.next();
+
+                                    callMonitor(host, msg, "OK");
+
+                                } catch (SQLException e) {
+                                    callMonitor(host, "Query failed!", "NOK");
+                                }
+                            }
                         } catch (SQLException e) {
                             callMonitor(host, e.getMessage(), "NOK");
-                        }
-                        if (connection != null) {
-                            try {
-                                String msg = "Connection to HANA successful!";
-                                Statement stmt = connection.createStatement();
-                                ResultSet resultSet = stmt.executeQuery("Select 'hello world' from dummy");
-                                resultSet.next();
-
-                                callMonitor(host, msg, "OK");
-
-                            } catch (SQLException e) {
-                                callMonitor(host, "Query failed!", "NOK");
-                            }
                         }
                     }
                 }
