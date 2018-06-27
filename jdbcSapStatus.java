@@ -1,16 +1,11 @@
 import java.sql.*;
 import java.io.*;
-import java.rmi.RemoteException;
-import java.util.logging.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.Proxy;
-import java.net.InetSocketAddress;
 
 public class jdbcSapStatus{
     public static void main(String[] argv) {
 
-        // Class.forName("com.sap.db.jdbc.Driver"); //THIS IS ONLY FOR JAVA 6 OR LESS.
         Connection connection = null;
         BufferedReader br = null;
         FileReader fr = null;
@@ -22,15 +17,17 @@ public class jdbcSapStatus{
             String sCurrentLine;
 
             while ((sCurrentLine = br.readLine()) != null) {
-                String[] params = sCurrentLine.split(" ");
-                if(params.length == 0 || params.length < 3)
+                String[] params = sCurrentLine.split(" ", 3);
+                if(params.length == 0 || params.length < 1)
                 {
-                    System.err.println("ERROR: Params required missing\n => FORMAT IN FILE: Hostname:port user password");
+                    System.err.println("ERROR: Params required missing\n => FORMAT IN FILE: Hostname:port service description");
                 } else {
+                    String usr = "MONITOR";
+                    String pwd = "M0n1t0r1";
                     String host = params[0];
-                    String usr = params[1];
-                    String pwd = params[2];
-                    if (host==null || usr==null || pwd==null) {
+                    String service = params[1];
+                    String description = params[2];
+                    if (host==null || service==null) {
                         System.err.println("ERROR: Params required missing");
                     } else{
                         try{
@@ -44,14 +41,16 @@ public class jdbcSapStatus{
                                     ResultSet resultSet = stmt.executeQuery("Select 'hello world' from dummy");
                                     resultSet.next();
 
-                                    callMonitor(host, msg, "OK");
+                                    callMonitor(host, msg, "OK", service, description);
 
                                 } catch (SQLException e) {
-                                    callMonitor(host, "Query failed!", "NOK");
+                                    callMonitor(host, "Query failed!", "NOK", service, description);
                                 }
+                            } else {
+                                callMonitor(host, "Sin conexión SAP!", "NOK", service, description);
                             }
                         } catch (SQLException e) {
-                            callMonitor(host, e.getMessage(), "NOK");
+                            callMonitor(host, e.getMessage(), "NOK", service, description);
                         }
                     }
                 }
@@ -70,7 +69,7 @@ public class jdbcSapStatus{
         }
     }
 
-    public static void callMonitor(String host, String message, String status){
+    public static void callMonitor(String host, String message, String status, String service, String description){
         try {
             String url_monitor = "http://elastic.url";
             URL obj = new URL(url_monitor);
@@ -80,7 +79,7 @@ public class jdbcSapStatus{
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
 
-            String data = "{\"primary_class\":\"SAP\",\"secondary_class\":\"HANA\",\"host\":\""+ host +"\",\"message\":\""+message+"\",\"status\":\""+status+"\"}";
+            String data = "{\"primary_class\":\"SAP\",\"secondary_class\":\"HANA\",\"host\":\""+ host +"\",\"message\":\""+message+"\",\"status\":\""+status+"\",\"service\":\""+service+"\",\"description\":\""+description+"\"}";
 
             OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream());
             out.write(data);
