@@ -17,16 +17,21 @@ public class jdbcSapStatus{
             String sCurrentLine;
 
             while ((sCurrentLine = br.readLine()) != null) {
-                String[] params = sCurrentLine.split(" ", 3);
-                if(params.length == 0 || params.length < 1)
+
+                if (sCurrentLine.startsWith("#") || sCurrentLine.length() == 0) continue;
+
+                String[] params = sCurrentLine.split(";");
+                if(sCurrentLine.length() > 0 && params.length == 0 || params.length < 2)
                 {
-                    System.err.println("ERROR: Params required missing\n => FORMAT IN FILE: Hostname:port service description");
+                    System.err.println("ERROR: Params required missing\n => FORMAT IN FILE: Hostname:port;service;description");
                 } else {
-                    String usr = "MONITOR";
-                    String pwd = "M0n1t0r1";
+                    String usr = "";
+                    String pwd = "";
                     String host = params[0];
                     String service = params[1];
-                    String description = params[2];
+                    String description = "";
+                    if (params.length > 2 && params[2] != null) { description = params[2]; }
+
                     if (host==null || service==null) {
                         System.err.println("ERROR: Params required missing");
                     } else{
@@ -71,7 +76,7 @@ public class jdbcSapStatus{
 
     public static void callMonitor(String host, String message, String status, String service, String description){
         try {
-            String url_monitor = "http://elastic.url";
+            String url_monitor = "http://url.elastic";
             URL obj = new URL(url_monitor);
             HttpURLConnection conn = (HttpURLConnection) obj.openConnection();
 
